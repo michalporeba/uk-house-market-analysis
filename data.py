@@ -28,7 +28,7 @@ def get_hpi(region: str):
   return hpi
 
 
-def get_hsp_from(postcodes):
+def get_hsp_from(postcodes, region_name):
   columns = ['id', 'price', 'ts', 'postcode', 'property_type', 'is_new_build', 'transaction_type', 'paon']
 
   sales = pd.DataFrame()
@@ -46,6 +46,11 @@ def get_hsp_from(postcodes):
 
   sales = sales.sort_values('ts')
 
+  sales = add_indexed_house_prices(sales, region_name)
+  sales = gpd.GeoDataFrame(sales, geometry = sales['geometry'])
+  sales["x"] = sales.geometry.x
+  sales["y"] = sales.geometry.y
+  sales.crs = 'EPSG:4326'
   return sales
 
 

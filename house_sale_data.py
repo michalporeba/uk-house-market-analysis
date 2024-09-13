@@ -45,25 +45,33 @@ def __():
 
 
 @app.cell
-def __(filter_to_local, get_postcode_location, get_postcodes):
+def __(
+    filter_to_local,
+    get_hsp_from,
+    get_postcode_location,
+    get_postcodes,
+):
+    # load the data for analysis
+    # first load postcodes, they come in files by area
     postcodes = get_postcodes('SA')
+    # find a physical location of a specific postcode
     centre = get_postcode_location(postcodes, 'SA2 0DE')
+    # filter the postcodes down to 10km around that physical location
     postcodes = filter_to_local(postcodes, centre, 10_000)
-
-    postcodes.plot()
-    return centre, postcodes
+    # get the sales data for that area
+    hsp = get_hsp_from(postcodes, 'Swansea')
+    return centre, hsp, postcodes
 
 
 @app.cell
-def __(add_indexed_house_prices, get_hsp_from, gpd, postcodes):
-    hsp = get_hsp_from(postcodes)
-    hsp = add_indexed_house_prices(hsp, 'Swansea')
-    hsp = gpd.GeoDataFrame(hsp, geometry = hsp['geometry'])
-    hsp["x"] = hsp.geometry.x
-    hsp["y"] = hsp.geometry.y
-    hsp.crs = 'EPSG:4326'
-    hsp
-    return hsp,
+def __(mo):
+    mo.md(r"""Loaded {{len(hsp)}} sales records 10km around SA2 0DE""")
+    return
+
+
+@app.cell
+def __():
+    return
 
 
 @app.cell
@@ -83,7 +91,7 @@ def __(
     hsp['y'] = hsp.geometry.y + np.random.uniform(-jitter_factor, jitter_factor, size=len(hsp))
 
     point = get_postcode_location(postcodes, 'SA2 8NA')
-    distance = 300
+    distance = 2200
     local_sales = filter_to_local(hsp, point, distance)
 
     graph = ox.graph_from_point((point.y, point.x), dist=distance, network_type="all", truncate_by_edge=True)
@@ -93,10 +101,10 @@ def __(
     local_postcodes = filter_to_local(postcodes, point, distance)
 
     #ax.scatter(point.x, point.y, c="green", s=100, alpha=0.2)
-    #sns.scatterplot(ax=ax, data=local_sales, x="x", y="y", hue="year", alpha=0.5)
+    #sns.scatterplot(3x="x", y="y", hue="year", alpha=0.5)
     ax.scatter(local_sales.geometry.x, local_sales.geometry.y, alpha=0.01, c="red", s=150)
     ax.scatter(point.x, point.y, c="red", s=50)
-        
+
     #ax.set_title(f"Postcode locations within {distance}m of {postcode}")
     print(len(local_sales))
     print(len(local_sales)/local_sales['date'].nunique())
