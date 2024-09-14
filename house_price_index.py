@@ -22,8 +22,9 @@ def __():
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns
-    from data import get_hpi, y_in_thousands
-    return get_hpi, mo, pd, plt, sns, y_in_thousands
+    from data import get_hpi
+    from plotting import y_in_thousands, highlight_periods
+    return get_hpi, highlight_periods, mo, pd, plt, sns, y_in_thousands
 
 
 @app.cell
@@ -40,7 +41,7 @@ def __(mo):
 
 
 @app.cell
-def __(get_hpi, plt, region, sns, y_in_thousands):
+def __(get_hpi, highlight_periods, plt, region, sns, y_in_thousands):
     hpi = get_hpi(region.value)
     price_columns = [
         "AveragePrice",
@@ -54,19 +55,17 @@ def __(get_hpi, plt, region, sns, y_in_thousands):
     hpi_view
 
 
-    plt.title(f"House Price Index in {region.value}")
+    plt.title(f"Avarage House Prices in {region.value}")
     plt.xticks(rotation=90)
     plt.xticks(range(0, hpi['date'].nunique(), 12))
     plt.xlabel("Year and Month")
     plt.ylabel("Average Price")
 
-    y_in_thousands(
-        sns.lineplot(data=hpi_view, x="date", y="price", hue="type")
+    highlight_periods(
+        y_in_thousands(
+            sns.lineplot(data=hpi_view, x="date", y="price", hue="type")
+        ), hpi["date"], hpi["period"]
     )
-
-
-
-
     return hpi, hpi_view, price_columns
 
 

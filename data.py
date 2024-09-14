@@ -1,16 +1,6 @@
 import pandas as pd
 import geopandas as gpd
 
-def format_in_thousands(value):
-    return f"£{int(value / 1000):,}K"
-
-
-def y_in_thousands(plot):
-  ylabels = [format_in_thousands(x) for x in plot.get_yticks()]
-  plot.set_yticks(plot.get_yticks())
-  plot.set_yticklabels(ylabels)
-  return plot
-
 
 def add_postcode_parts(df, postcode_column):
   df['area'] = df[postcode_column].str[:2]
@@ -20,11 +10,26 @@ def add_postcode_parts(df, postcode_column):
   return df
 
 
+def date_to_period(date):
+  if date < "2003-05":
+    return "Old"
+  if date < "2008-01":
+    return "Bubble"
+  if date < "2013-05":
+    return "Crash"
+  if date < "2020-10":
+    return "Modern"
+  if date < "2022-10":
+    return "CoVID"
+  return "Readjustment"
+  
+
 def get_hpi(region: str):
   hpi = pd.read_csv('data/UK-HPI-full-file-2024-06.csv')
   hpi = hpi[hpi['RegionName']==region]
   hpi["date"] = pd.to_datetime(hpi["Date"])
-  hpi['date'] = hpi['date'].dt.strftime('%Y-%d')
+  hpi["date"] = hpi['date'].dt.strftime('%Y-%d')
+  hpi["period"] = hpi["date"].apply(date_to_period)
   return hpi
 
 
@@ -41,6 +46,7 @@ def get_hsp_from(postcodes, region_name):
   sales['date'] = pd.to_datetime(sales['ts'])
   sales['date'] = sales['date'].dt.strftime('%Y-%m')
   sales['year'] = sales['date'].str[:4]
+  sales["period"] = sales["date"].apply(date_to_period)
 
   sales = pd.merge(sales, postcodes, on='postcode', how='left')
 
@@ -56,11 +62,10 @@ def get_hsp_from(postcodes, region_name):
 
 def add_indexed_house_prices(hsp, region):
   hpi = get_hpi(region)
-
   hsp['average_price'] = -1
   hsp['hpi'] = -1
   hsp = pd.merge(hsp, hpi, on="date", how="left")
-
+  
   hsp.loc[hsp['property_type'] == 'D', 'average_price'] = hsp['DetachedPrice']
   hsp.loc[hsp['property_type'] == 'D', 'hpi'] = hsp['DetachedIndex']
 
