@@ -62,6 +62,7 @@ def get_hsp_from(postcodes, region_name):
 
 def add_indexed_house_prices(hsp, region):
   hpi = get_hpi(region)
+  hpi = hpi.drop("period", axis=1)
   hsp['average_price'] = -1
   hsp['hpi'] = -1
   hsp = pd.merge(hsp, hpi, on="date", how="left")

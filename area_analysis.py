@@ -18,13 +18,12 @@ def __():
     import seaborn as sns
     from data import (
         get_hpi,
-        y_in_thousands,
         get_postcodes,
         get_postcode_location,
         filter_to_local,
         get_hsp_from
     )
-    from plotting import (get_map)
+    from plotting import (get_map, y_in_thousands, highlight_periods)
     return (
         filter_to_local,
         get_hpi,
@@ -32,6 +31,7 @@ def __():
         get_map,
         get_postcode_location,
         get_postcodes,
+        highlight_periods,
         mo,
         pd,
         plt,
@@ -95,6 +95,7 @@ def __(
     focus_postcode = parameters.value["postcode"]
     focus_distance_m = parameters.value["distance"]
     focus_point = get_postcode_location(postcodes, focus_postcode)
+    point_size = 100/(focus_distance_m/500)
     fhsp = filter_to_local(hsp, focus_point, focus_distance_m)
 
     jitter_factor = 0.0005
@@ -111,37 +112,26 @@ def __(
         focus_postcode,
         jitter_factor,
         np,
+        point_size,
     )
 
 
 @app.cell
-def __(fhsp, focus_distance_m, focus_point, get_map):
-    old_sales = fhsp[fhsp["date"] < "2012-01"]
-    modern_sales = fhsp[(fhsp["date"] >= "2012-01") & (fhsp["date"] < "2020-03")]
-    covid_sales = fhsp[(fhsp["date"] >= "2020-03") & (fhsp["date"] < "2023-03")]
-    recent_sales = fhsp[fhsp["date"] >= "2023-03"]
-
+def __(fhsp, focus_distance_m, focus_point, get_map, point_size, sns):
+    old_sales = fhsp[fhsp["period"] == "Old"]
+    modern_sales = fhsp[fhsp["period"] != "Old"]
 
     all_sales_plot = get_map(focus_point, focus_distance_m, "All sales covered by the analysis")
-    #all_sales_plot.scatter(fhsp.geometry.x, fhsp.geometry.y, alpha=0.01, c="green", s=150)
-    all_sales_plot.scatter(old_sales.x, old_sales.y, alpha=0.05, c="grey", s=100)
-    all_sales_plot.scatter(modern_sales.x, modern_sales.y, alpha=0.1, c="green", s=100)
-    all_sales_plot.scatter(covid_sales.x, covid_sales.y, alpha=0.2, c="red", s=100)
-    all_sales_plot.scatter(recent_sales.x, recent_sales.y, alpha=0.2, c="yellow", s=100)
+    all_sales_plot.scatter(old_sales.x, old_sales.y, alpha=0.2, c="grey", s=point_size)
 
-    all_sales_plot
-    return (
-        all_sales_plot,
-        covid_sales,
-        modern_sales,
-        old_sales,
-        recent_sales,
-    )
+    sns.scatterplot(data=modern_sales, ax=all_sales_plot, x='x', y='y', hue='period', s=point_size, alpha=0.5)
+
+    #all_sales_plot
+    return all_sales_plot, modern_sales, old_sales
 
 
 @app.cell
-def __(fhsp):
-    fhsp
+def __():
     return
 
 
