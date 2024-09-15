@@ -10,6 +10,27 @@ def add_postcode_parts(df, postcode_column):
   return df
 
 
+def property_type_expander(type):
+  if type is None:
+    return "UNKNOWN"
+  return {
+    "T": "TERRACED",
+    "S": "SEMI-DETACHED",
+    "D": "DETACHED",
+    "F": "FLAT",
+    "O": "OTHER"
+  }.get(type, type)
+
+
+def transaction_type_expander(type):
+  if type is None:
+    return "UNKNWON"
+  return {
+    "F": "FREEHOLD",
+    "L": "LEASHOLD"
+  }.get(type, type)
+
+
 def date_to_period(date):
   if date < "2003-05":
     return "Old"
@@ -22,7 +43,7 @@ def date_to_period(date):
   if date < "2022-10":
     return "CoVID"
   return "Readjustment"
-  
+
 
 def get_hpi(region: str):
   hpi = pd.read_csv('data/UK-HPI-full-file-2024-06.csv')
@@ -42,7 +63,9 @@ def get_hsp_from(postcodes, region_name):
   for chunk in pd.read_csv('data/pp-complete.csv', header=None, usecols=[0,1,2,3,4,5,6,7], names=columns, chunksize=chunk_size):
     filtered = chunk[chunk['postcode'].isin(postcodes['postcode'])]
     sales = pd.concat([sales, filtered], ignore_index=True)
-    
+
+  sales["property_type"] = sales["property_type"].apply(property_type_expander)
+  sales["transaction_type"] = sales["transaction_type"].apply(transaction_type_expander)
   sales['date'] = pd.to_datetime(sales['ts'])
   sales['date'] = sales['date'].dt.strftime('%Y-%m')
   sales['year'] = sales['date'].str[:4]
