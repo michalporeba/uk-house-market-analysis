@@ -241,5 +241,16 @@ def __(date_range, fhsp, highlight_periods, hpi, pd, plt, sns):
     return volume_of_sales,
 
 
+app._unparsable_cell(
+    r"""
+    ceny w porownaniu do sredniej ze swansea
+    ceny w porownaniu do house price index (indexed prices over time)
+    ceny w porownaniu do sredniej z wybranego rejonu. 
+    heatmap of sales? (miesiace)
+    """,
+    name="__"
+)
+
+
 if __name__ == "__main__":
     app.run()
