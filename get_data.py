@@ -5,17 +5,24 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def __(filename, r):
+def __():
     import requests
     from bs4 import BeautifulSoup
     import os
     from data import get_data_location
     from urllib.parse import urljoin
+    import re
+    return BeautifulSoup, get_data_location, os, re, requests, urljoin
 
 
+@app.cell
+def __():
     hpi_url = "https://www.gov.uk/government/collections/uk-house-price-index-reports"
+    return hpi_url,
 
 
+@app.cell
+def __(BeautifulSoup, hpi_url, os, r, re, requests, urljoin):
     def get_with_exceptions(url, stream=False):
         r = requests.get(url, stream=stream)
         r.raise_for_status()
@@ -69,23 +76,32 @@ def __(filename, r):
         return get_link_from(download_page, "UK HPI full file")
 
 
-    find_download_location()
+    def find_filename(url):
+        match = re.search(r"([^/]+\.csv)", url)
+
+        if not match:
+            raise Exception(f"Unable to find a file name in {url}!")
+
+        return match.group(1)
+
+
+    data_url = find_download_location()
+    filename = find_filename(data_url)
+
+    filename
 
     return (
-        BeautifulSoup,
         create_predicate_for,
+        data_url,
         download_file,
         ensure_file_does_not_exist,
+        filename,
         find_download_location,
-        get_data_location,
+        find_filename,
         get_link_from,
         get_soup,
         get_with_exceptions,
-        hpi_url,
-        os,
         pull_from_response_stream,
-        requests,
-        urljoin,
     )
 
 
