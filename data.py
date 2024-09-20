@@ -1,5 +1,12 @@
 import pandas as pd
 import geopandas as gpd
+import os
+
+
+def get_data_location():
+  location = "data"
+  os.makedirs(location, exist_ok=True)
+  return location
 
 
 def add_postcode_parts(df, postcode_column):
