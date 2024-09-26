@@ -8,7 +8,10 @@ from helpers.configuration import (
   get_data_location,
   get_hpi_data_location,
   get_latest_hpi_file_path,
-  get_latest_pp_file_path
+  get_latest_pp_file_path,
+  get_postcode_data_location,
+  get_postcode_zip_path,
+  get_postcode_data_file_path
 )
 from urllib.parse import urljoin
   
@@ -152,7 +155,7 @@ def get_pp_data(pp_url):
         return f"""
 File **{path}** already exists!</br>
 The latest house sale data available is from **{highest_ts}**.\n
-Remove it if you want to get the newer file.\n
+Remove it if you want to get a newer file.\n
         """
 
     else:
@@ -168,7 +171,41 @@ Remove it if you want to get the newer file.\n
     return f"""
 Downloaded **{path}**.\n
     """
-  
-  
 
+def combine_csv_files(source_folder, path):
+    with open(path, 'w') as output:
+        for filename in sorted(os.listdir(source_folder)):
+            source_path = os.path.join(source_folder, filename)
+            if not os.path.isdir(source_path):
+                with open(source_path, 'r') as source:
+                    for line in source:
+                        output.write(line)
+
+
+def get_postcode_data(url):
+    path = get_postcode_zip_path()
+    
+    if os.path.exists(path):
+        return f"""
+File **{path}** already exists!\n
+Remove it if you want to get a newer file.
+        """
+
+    try:
+        download_file(url, path)
+    except Exception as ex:
+        return f"""
+**Unable to download postcode data** from {url}.
+
+{ex}
+"""
+
+    shutil.unpack_archive(path, get_postcode_data_location())
+    csv_files_location = os.path.join(get_postcode_data_location(), 'Data/CSV')
+    combine_csv_files(csv_files_location, get_postcode_data_file_path())
+  
+    return f"""
+Downloaded **{path}**.
+Postcodes are available in **{get_postcode_data_file_path()}**
+    """
     
