@@ -3,12 +3,6 @@ import geopandas as gpd
 import os
 
 
-def get_data_location():
-  location = "data"
-  os.makedirs(location, exist_ok=True)
-  return location
-
-
 def add_postcode_parts(df, postcode_column):
   df['area'] = df[postcode_column].str[:2]
   df['district'] = df[postcode_column].str[:4]
