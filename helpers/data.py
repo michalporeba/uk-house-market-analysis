@@ -2,7 +2,11 @@ import pandas as pd
 import geopandas as gpd
 import os
 
-from helpers.configuration import get_postcode_data_file_path
+from helpers.configuration import (
+  get_postcode_data_file_path,
+  get_latest_hpi_file_path,
+  get_latest_pp_file_path
+)
 
 def add_postcode_parts(df, postcode_column):
   df['area'] = df[postcode_column].str[:2]
@@ -47,8 +51,16 @@ def date_to_period(date):
   return "Readjustment"
 
 
-def get_hpi(region: str):
-  hpi = pd.read_csv('...insert file name...')
+def get_all_hpi():
+  hpi = pd.read_csv(get_latest_hpi_file_path())
+  hpi["date"] = pd.to_datetime(hpi["Date"])
+  hpi["date"] = hpi['date'].dt.strftime('%Y-%d')
+  hpi["period"] = hpi["date"].apply(date_to_period)
+  return hpi
+
+
+def get_hpi_for(region: str):
+  hpi = pd.read_csv(get_latest_hpi_file_path())
   hpi = hpi[hpi['RegionName']==region]
   hpi["date"] = pd.to_datetime(hpi["Date"])
   hpi["date"] = hpi['date'].dt.strftime('%Y-%d')
@@ -56,16 +68,28 @@ def get_hpi(region: str):
   return hpi
 
 
-def get_hsp_from(postcodes, region_name):
+def get_prices_paid_in(postcodes):
   columns = ['id', 'price', 'ts', 'postcode', 'property_type', 'is_new_build', 'transaction_type', 'paon']
-
+  
   sales = pd.DataFrame()
   chunk_size = 10000
 
   for chunk in pd.read_csv('data/pp-complete.csv', header=None, usecols=[0,1,2,3,4,5,6,7], names=columns, chunksize=chunk_size):
-    filtered = chunk[chunk['postcode'].isin(postcodes['postcode'])]
-    sales = pd.concat([sales, filtered], ignore_index=True)
+    if postcodes is not None:
+      filtered = chunk[chunk['postcode'].isin(postcodes['postcode'])]
+      sales = pd.concat([sales, filtered], ignore_index=True)
+    else: 
+      sales = pd.concat([sales, chunk], ignore_index=True)
 
+  return sales
+
+
+def get_all_prices_paid():
+  return get_prices_paid_in(None)
+
+
+def get_hsp_from(postcodes, region_name):
+  sales = get_prices_paid_for(postcodes)
   sales["property_type"] = sales["property_type"].apply(property_type_expander)
   sales["transaction_type"] = sales["transaction_type"].apply(transaction_type_expander)
   sales['date'] = pd.to_datetime(sales['ts'])

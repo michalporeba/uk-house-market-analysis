@@ -167,7 +167,8 @@ Remove it if you want to get a newer file.\n
 
 {ex}
             """
-  
+        else:
+          shutil.copy(path, get_latest_pp_file_path())
     return f"""
 Downloaded **{path}**.\n
     """
