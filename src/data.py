@@ -2,7 +2,7 @@ import pandas as pd
 import geopandas as gpd
 import os
 
-from helpers.configuration import (
+from src.configuration import (
   get_postcode_data_file_path,
   get_latest_hpi_file_path,
   get_latest_pp_file_path

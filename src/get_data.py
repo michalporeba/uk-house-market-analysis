@@ -4,9 +4,10 @@ import requests
 import shutil
 
 from bs4 import BeautifulSoup
-from helpers.configuration import (
+from src.configuration import (
   get_data_location,
   get_hpi_data_location,
+  get_pp_data_location,
   get_latest_hpi_file_path,
   get_latest_pp_file_path,
   get_postcode_data_location,
@@ -33,9 +34,13 @@ def ensure_file_does_not_exist(path):
 
 
 def pull_from_response_stream(response, path):
+    chunks = 0
     with open(path, "wb") as f:
-        for chunk in response.iter_content(1024):
+        for chunk in response.iter_content(10240):
             f.write(chunk)
+            chunks += 1
+            if chunks / 1000 == 0:
+              print(f"Downloaded {chunks} chunks")
 
 
 def download_file(url, path):
@@ -148,7 +153,7 @@ def get_highest_ts(filename):
 def get_pp_data(pp_url):
     url = find_pp_download_location(pp_url)
     filename = find_filename(url)  
-    path = os.path.join(get_data_location(), filename)
+    path = os.path.join(get_pp_data_location(), filename)
     
     if os.path.exists(path):
         highest_ts = get_highest_ts(path)
@@ -167,8 +172,7 @@ Remove it if you want to get a newer file.\n
 
 {ex}
             """
-        else:
-          shutil.copy(path, get_latest_pp_file_path())
+          
     return f"""
 Downloaded **{path}**.\n
     """
